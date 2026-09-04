@@ -32,6 +32,10 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      - name: Remover plugin exclusivo do iOS
+        run: |
+          node -e "let p=require('./package.json'); delete p.dependencies['nl.kingsquare.cordova.background-audio']; if(p.cordova&&p.cordova.plugins) delete p.cordova.plugins['nl.kingsquare.cordova.background-audio']; require('fs').writeFileSync('package.json', JSON.stringify(p,null,4)+'\n')"
+
       - name: Preparar plugin Moodle
         run: npm run prod --prefix cordova-plugin-moodleapp
 
