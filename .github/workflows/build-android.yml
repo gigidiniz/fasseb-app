@@ -30,7 +30,7 @@ jobs:
         run: npm ci
 
       - name: Compilar Android
-        run: npm run prod:android
+        run: npm run prod --prefix cordova-plugin-moodleapp && NODE_ENV=production npx ionic cordova build android --prod
 
       - name: Localizar APK
         run: find . -type f -name "*.apk" -print
