@@ -1,0 +1,49 @@
+name: Build FASSEB Android
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar Android 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Preparar plugin Moodle
+        run: npm run prod --prefix cordova-plugin-moodleapp
+
+      - name: Compilar FASSEB Android
+        run: NODE_ENV=production npx ionic cordova build android --prod --verbose
+
+      - name: Localizar APK
+        run: find . -type f -name "*.apk" -print
+
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: FASSEB-Android
+          path: "**/*.apk"
+          if-no-files-found: error
