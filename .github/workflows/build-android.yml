@@ -50,7 +50,7 @@ jobs:
           set -o pipefail
           export DEBUG="cordova:*"
           export CORDOVA_LOG_LEVEL=verbose
-          NODE_ENV=production npx ionic cordova build android --prod --verbose 2>&1 | tee build-full.log
+          npx ionic cordova build android --prod --verbose 2>&1 | tee build-full.log
 
       - name: Mostrar diagnostico completo
         if: always()
