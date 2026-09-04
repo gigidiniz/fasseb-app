@@ -36,6 +36,11 @@ jobs:
         run: |
           node -e "let p=require('./package.json'); delete p.dependencies['nl.kingsquare.cordova.background-audio']; if(p.cordova&&p.cordova.plugins) delete p.cordova.plugins['nl.kingsquare.cordova.background-audio']; require('fs').writeFileSync('package.json', JSON.stringify(p,null,4)+'\n')"
 
+      - name: Garantir plugins locais do Cordova
+        run: |
+          npm install --no-save ./cordova-plugin-moodleapp
+          npm install --no-save es6-promise-plugin@4.2.2
+
       - name: Preparar plugin Moodle
         run: npm run prod --prefix cordova-plugin-moodleapp
 
