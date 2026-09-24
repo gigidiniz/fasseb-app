@@ -46,6 +46,8 @@ jobs:
 
       - name: Gerar idiomas do aplicativo
         run: bash scripts/update_langpacks.sh
+      - name: Forcar traducoes em Portugues
+        run: cp src/assets/lang/pt-br.json src/assets/lang/en.json
 
       - name: Compilar FASSEB Android
         shell: bash
