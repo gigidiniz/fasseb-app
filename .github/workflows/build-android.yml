@@ -46,6 +46,7 @@ jobs:
 
       - name: Gerar idiomas e aplicar Portugues
         run: |
+          mkdir -p src/assets/lang
           bash scripts/update_langpacks.sh
           find . -type f \( -name "pt-br.json" -o -name "pt_br.json" \) -print
           cp src/assets/lang/pt-br.json src/assets/lang/en.json
