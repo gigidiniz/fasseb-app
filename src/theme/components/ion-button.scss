@@ -77,7 +77,12 @@ ion-button {
         --ion-color-primary: var(--core-input-text);
     }
 
-    &.button.button-solid,
+    &.button.button-solid {
+        --background: #8B1E2D;
+        --color: #FFFFFF;
+        --border-radius: var(--core-input-radius);
+    }
+
     &.button.button-outline {
         --border-radius: var(--core-input-radius);
     }
