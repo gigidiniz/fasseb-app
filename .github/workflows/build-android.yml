@@ -44,10 +44,11 @@ jobs:
       - name: Preparar plugin Moodle
         run: npm run prod --prefix cordova-plugin-moodleapp
 
-      - name: Gerar idiomas do aplicativo
-        run: bash scripts/update_langpacks.sh
-      - name: Forcar traducoes em Portugues
-        run: cp src/assets/lang/pt-br.json src/assets/lang/en.json
+      - name: Gerar idiomas e aplicar Portugues
+        run: |
+          bash scripts/update_langpacks.sh
+          find . -type f \( -name "pt-br.json" -o -name "pt_br.json" \) -print
+          cp src/assets/lang/pt-br.json src/assets/lang/en.json
 
       - name: Compilar FASSEB Android
         shell: bash
