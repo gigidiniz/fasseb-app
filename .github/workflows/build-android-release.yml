@@ -58,6 +58,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.FASSEB_KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.FASSEB_KEY_ALIAS }}
         run: |
+        mkdir -p platforms/android
           cat > platforms/android/release-signing.properties <<EOF
           key.store=../../fasseb-upload-key.jks
           key.alias=$KEY_ALIAS
