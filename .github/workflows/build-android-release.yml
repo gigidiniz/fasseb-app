@@ -1,4 +1,4 @@
-name: Build FASSEB Android
+name: Build FASSEB Android AAB Release
 
 on:
   workflow_dispatch:
