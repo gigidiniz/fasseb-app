@@ -1,0 +1,101 @@
+name: Build FASSEB Android AAB Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Instalar Android 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Remover plugin exclusivo do iOS
+        run: |
+          node -e "let p=require('./package.json'); delete p.dependencies['nl.kingsquare.cordova.background-audio']; if(p.cordova&&p.cordova.plugins) delete p.cordova.plugins['nl.kingsquare.cordova.background-audio']; require('fs').writeFileSync('package.json', JSON.stringify(p,null,4)+'\n')"
+
+      - name: Garantir plugins locais do Cordova
+        run: |
+          npm install --no-save ./cordova-plugin-moodleapp
+          npm install --no-save es6-promise-plugin@4.2.2
+
+      - name: Preparar plugin Moodle
+        run: npm run prod --prefix cordova-plugin-moodleapp
+
+      - name: Restaurar chave de assinatura Android
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.FASSEB_KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > fasseb-upload-key.jks
+
+      - name: Configurar assinatura Android
+        shell: bash
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.FASSEB_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.FASSEB_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.FASSEB_KEY_ALIAS }}
+        run: |
+          cat > platforms/android/release-signing.properties <<EOF
+          key.store=../../fasseb-upload-key.jks
+          key.alias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
+          storePassword=$KEYSTORE_PASSWORD
+          storeType=pkcs12
+          EOF
+
+      - name: Gerar idiomas e aplicar Portugues
+        run: |
+          mkdir -p src/assets/lang
+          bash scripts/update_langpacks.sh
+          find . -type f \( -name "pt-br.json" -o -name "pt_br.json" \) -print
+          cp src/assets/lang/pt-br.json src/assets/lang/en.json
+
+      - name: Compilar FASSEB Android
+        shell: bash
+        run: |
+          set -o pipefail
+          export DEBUG="cordova:*"
+          export CORDOVA_LOG_LEVEL=verbose
+          npx ionic cordova build android --prod --release -- --packageType=bundle --verbose 2>&1 | tee build-full.log
+
+      - name: Mostrar diagnostico completo
+        if: always()
+        shell: bash
+        run: |
+          echo "===== FINAL DO BUILD ====="
+          tail -n 250 build-full.log || true
+          echo "===== LOGS DO NPM ====="
+          find ~/.npm/_logs -type f -name "*.log" -print -exec tail -n 120 {} \; || true
+
+      - name: Localizar AAB
+        run: find . -type f -name "*.aab" -print
+
+      - name: Publicar AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: FASSEB-Android-AAB
+          path: "**/*.aab"
+          if-no-files-found: error
