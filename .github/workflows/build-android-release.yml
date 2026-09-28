@@ -58,14 +58,22 @@ jobs:
           KEY_PASSWORD: ${{ secrets.FASSEB_KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.FASSEB_KEY_ALIAS }}
         run: |
-          mkdir -p platforms/android
-          cat > platforms/android/release-signing.properties <<EOF
-          key.store=../../fasseb-upload-key.jks
-          key.alias=$KEY_ALIAS
-          keyPassword=$KEY_PASSWORD
-          storePassword=$KEYSTORE_PASSWORD
-          storeType=pkcs12
-          EOF
+          node - <<'NODE'
+          const fs = require('fs');
+          const build = {
+            android: {
+              release: {
+                keystore: "fasseb-upload-key.jks",
+                storePassword: process.env.KEYSTORE_PASSWORD,
+                alias: process.env.KEY_ALIAS,
+                password: process.env.KEY_PASSWORD,
+                keystoreType: "pkcs12",
+                packageType: "bundle"
+              }
+            }
+          };
+          fs.writeFileSync("build.json", JSON.stringify(build, null, 2));
+          NODE
 
       - name: Gerar idiomas e aplicar Portugues
         run: |
@@ -78,9 +86,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          export DEBUG="cordova:*"
           export CORDOVA_LOG_LEVEL=verbose
-          npx ionic cordova build android --prod --release -- --packageType=bundle --verbose 2>&1 | tee build-full.log
+          npx ionic cordova build android --prod --release -- --buildConfig=build.json --packageType=bundle --verbose 2>&1 | tee build-full.log
 
       - name: Mostrar diagnostico completo
         if: always()
