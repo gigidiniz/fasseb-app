@@ -60,7 +60,7 @@
     </feature>
     <platform name="android">
         <icon src="resources/android/icon-foreground.png" />
-        <preference name="AndroidWindowSplashScreenAnimatedIcon" value="resources/android/android-splash.xml" />
+        <preference name="AndroidWindowSplashScreenAnimatedIcon" value="resources/android/icon/fasseb-splash.png" />
         <preference name="AndroidWindowSplashScreenBackground" value="#FFFFFF" />
         <preference name="AndroidWindowSplashScreenIconBackgroundColor" value="#FFFFFF" />
         <resource-file src="google-services.json" target="app/google-services.json" />
