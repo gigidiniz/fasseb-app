@@ -35,6 +35,9 @@ jobs:
           find . -type f \( -name "pt-br.json" -o -name "pt_br.json" \) -print
           cp src/assets/lang/pt-br.json src/assets/lang/en.json
 
+      - name: Criar plataforma iOS
+        run: npx cordova platform add ios@8.1.1
+
       - name: Verificar ambiente iOS
         run: |
           node --version
