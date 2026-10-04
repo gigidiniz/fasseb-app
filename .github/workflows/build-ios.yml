@@ -1,0 +1,66 @@
+name: Build FASSEB iOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Baixar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Garantir plugins locais do Cordova
+        run: |
+          npm install --no-save ./cordova-plugin-moodleapp
+          npm install --no-save es6-promise-plugin@4.2.2
+
+      - name: Preparar plugin Moodle
+        run: npm run prod --prefix cordova-plugin-moodleapp
+
+      - name: Gerar idiomas e aplicar Portugues
+        run: |
+          mkdir -p src/assets/lang
+          bash scripts/update_langpacks.sh
+          find . -type f \( -name "pt-br.json" -o -name "pt_br.json" \) -print
+          cp src/assets/lang/pt-br.json src/assets/lang/en.json
+
+      - name: Verificar ambiente iOS
+        run: |
+          node --version
+          npx cordova --version
+          xcodebuild -version
+          pod --version
+          npx cordova requirements ios
+
+      - name: Compilar FASSEB iOS sem assinatura
+        shell: bash
+        run: |
+          set -o pipefail
+          npx ionic cordova build ios --prod --debug -- --codeSignIdentity="" --developmentTeam="" 2>&1 | tee build-ios.log
+
+      - name: Mostrar diagnostico
+        if: always()
+        run: |
+          echo "===== FINAL DO BUILD IOS ====="
+          tail -n 300 build-ios.log || true
+
+      - name: Publicar projeto iOS
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FASSEB-iOS-Build
+          path: |
+            platforms/ios/
+            build-ios.log
+          if-no-files-found: warn
