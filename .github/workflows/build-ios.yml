@@ -41,6 +41,9 @@ jobs:
       - name: Criar plataforma iOS
         run: npx cordova platform add ios@8.1.1
 
+      - name: Instalar ios-deploy
+        run: npm install -g ios-deploy
+
       - name: Verificar ambiente iOS
         run: |
           node --version
