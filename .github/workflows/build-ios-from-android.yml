@@ -45,6 +45,24 @@ jobs:
       - name: Adicionar plataforma iOS limpa
         run: npx cordova platform add ios@8.1.1 --no-save
 
+      - name: Corrigir headers privados do plugin HTTP no iOS
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          base = Path('platforms/ios/App/Plugins/@moodlehq/cordova-plugin-advanced-http')
+          files = ['SM_AFNetworkReachabilityManager.m', 'SM_AFHTTPSessionManager.m']
+          for name in files:
+              path = base / name
+              if not path.is_file():
+                  raise SystemExit(f'Arquivo esperado nao encontrado: {path}')
+              data = path.read_text()
+              if 'netinet6/in6.h' not in data:
+                  raise SystemExit(f'Header esperado nao encontrado: {path}')
+              path.write_text(data.replace('netinet6/in6.h', 'netinet/in.h'))
+              print(f'Corrigido: {path}')
+          PY
+
       - name: Compilar iOS para simulador sem assinatura
         shell: bash
         run: |
