@@ -80,6 +80,18 @@ jobs:
           PY
           xcodebuild -project platforms/ios/App/App.xcodeproj -target App -showBuildSettings 2>/dev/null | grep -E 'PRODUCT_MODULE_NAME =|SWIFT_OBJC_INTERFACE_HEADER_NAME =|SWIFT_INSTALL_OBJC_HEADER =' | head -15 || true
 
+      - name: Diagnosticar integracao Swift do plugin Push
+        shell: bash
+        run: |
+          {
+            echo '=== Swift sources instalados ==='
+            find platforms/ios/App -name '*.swift' -print | head -80
+            echo '=== Referencias a Swift gerado ==='
+            grep -R -n -E '(Moodle-Swift.h|App-Swift.h|SWIFT_OBJC_INTERFACE_HEADER_NAME|SWIFT_VERSION|SWIFT_INSTALL_OBJC_HEADER)' platforms/ios/App/Plugins/@moodlehq/phonegap-plugin-push platforms/ios/App/App.xcodeproj/project.pbxproj | head -100 || true
+            echo '=== Configuracoes Swift no Xcode ==='
+            xcodebuild -project platforms/ios/App/App.xcodeproj -target App -showBuildSettings 2>&1 | grep -E '(PRODUCT_MODULE_NAME|SWIFT_OBJC_INTERFACE_HEADER_NAME|SWIFT_VERSION|SWIFT_INSTALL_OBJC_HEADER|DEFINES_MODULE|SWIFT_OBJC_BRIDGING_HEADER)' | head -60 || true
+          } | tee swift-diagnostico.log
+
       - name: Compilar iOS para simulador sem assinatura
         shell: bash
         run: |
@@ -93,5 +105,6 @@ jobs:
           name: fasseb-ios-diagnostico
           path: |
             build-ios.log
+            swift-diagnostico.log
           if-no-files-found: warn
           retention-days: 7
