@@ -63,6 +63,23 @@ jobs:
               print(f'Corrigido: {path}')
           PY
 
+      - name: Ajustar import Swift do plugin Push para o modulo App
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('platforms/ios/App/Plugins/@moodlehq/phonegap-plugin-push/EncryptionHandler.m')
+          if not path.is_file():
+              raise SystemExit(f'Arquivo esperado nao encontrado: {path}')
+          source = path.read_text()
+          if '"Moodle-Swift.h"' not in source:
+              raise SystemExit('Import Moodle-Swift.h nao encontrado; revisar plugin antes de alterar')
+          source = source.replace('"Moodle-Swift.h"', '"App-Swift.h"')
+          path.write_text(source)
+          print('Import Swift ajustado para App-Swift.h')
+          PY
+          xcodebuild -project platforms/ios/App/App.xcodeproj -target App -showBuildSettings 2>/dev/null | grep -E 'PRODUCT_MODULE_NAME =|SWIFT_OBJC_INTERFACE_HEADER_NAME =|SWIFT_INSTALL_OBJC_HEADER =' | head -15 || true
+
       - name: Compilar iOS para simulador sem assinatura
         shell: bash
         run: |
