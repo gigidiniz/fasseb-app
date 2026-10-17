@@ -92,6 +92,21 @@ jobs:
             xcodebuild -project platforms/ios/App/App.xcodeproj -target App -showBuildSettings 2>&1 | grep -E '(PRODUCT_MODULE_NAME|SWIFT_OBJC_INTERFACE_HEADER_NAME|SWIFT_VERSION|SWIFT_INSTALL_OBJC_HEADER|DEFINES_MODULE|SWIFT_OBJC_BRIDGING_HEADER)' | head -60 || true
           } | tee swift-diagnostico.log
 
+      - name: Corrigir dependencia de cabecalho Swift no plugin Push
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('platforms/ios/App/Plugins/@moodlehq/phonegap-plugin-push/EncryptionHandler.m')
+          source = path.read_text()
+          if '#import "App-Swift.h"' not in source:
+              raise SystemExit('Import Swift esperado nao encontrado')
+          # Importar via modulo evita procurar um arquivo gerado antes do compilador Swift.
+          source = source.replace('#import "App-Swift.h"', '#import <App/App-Swift.h>')
+          path.write_text(source)
+          print('Usando import de interface Swift pelo modulo App')
+          PY
+
       - name: Compilar iOS para simulador sem assinatura
         shell: bash
         run: |
