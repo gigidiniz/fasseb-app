@@ -1,0 +1,61 @@
+name: FASSEB iOS - Base Android
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - name: Baixar codigo da branch selecionada
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Verificar ambiente Apple
+        run: |
+          node --version
+          xcodebuild -version
+          pod --version
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Preparar plugin Moodle
+        run: npm run prod --prefix cordova-plugin-moodleapp
+
+      - name: Gerar idiomas
+        run: |
+          mkdir -p src/assets/lang
+          bash scripts/update_langpacks.sh
+          test -f src/assets/lang/pt-br.json
+          cp src/assets/lang/pt-br.json src/assets/lang/en.json
+
+      - name: Compilar web
+        run: npm run build:prod
+
+      - name: Criar plataforma iOS limpa
+        run: npx cordova platform add ios@8.1.1 --no-save
+
+      - name: Compilar iOS para simulador sem assinatura
+        shell: bash
+        run: |
+          set -o pipefail
+          npx cordova build ios --debug --emulator --buildFlag="-sdk iphonesimulator" --buildFlag="CODE_SIGNING_ALLOWED=NO" 2>&1 | tee build-ios.log
+
+      - name: Salvar diagnostico
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fasseb-ios-diagnostico
+          path: build-ios.log
+          if-no-files-found: warn
+          retention-days: 7
